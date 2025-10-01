@@ -1,0 +1,30 @@
+version: "3.9"
+
+services:
+  alarms-dev:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: dev
+    container_name: cloud-alarms-service-dev
+    ports:
+      - "8080:8080"
+      - "5005:5005"  # Debug port
+    volumes:
+      - ./src:/app/src         # Mount source code
+      - ./pom.xml:/app/pom.xml # Mount pom.xml so dependencies update
+      - ./target:/app/target
+      - ~/.m2:/root/.m2        # Cache Maven dependencies across builds
+    environment:
+      - SPRING_PROFILES_ACTIVE=dev
+
+  alarms-prod:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: prod
+    container_name: cloud-alarms-service
+    ports:
+      - "8081:8080"
+    environment:
+      - SPRING_PROFILES_ACTIVE=prod

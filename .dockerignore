@@ -1,0 +1,29 @@
+# Ignore Maven/Gradle build output
+target/
+build/
+
+# Ignore temporary files
+*.log
+*.tmp
+*.swp
+
+# Ignore IDE/project files
+.idea/
+*.iml
+.vscode/
+.project
+.classpath
+.settings/
+
+# Ignore Git files
+.git
+.gitignore
+.gitattributes
+
+# Ignore Docker-specific files
+Dockerfile
+.dockerignore
+
+# Ignore OS files
+.DS_Store
+Thumbs.db
