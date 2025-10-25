@@ -2,20 +2,23 @@
 # Base build stage
 # ================================
 FROM amazoncorretto:21-alpine3.21-jdk AS base
+
 WORKDIR /app
 
-# Install Maven
-RUN apk add --no-cache maven
+# Install Maven + Bash in one layer and set permissions for scripts
+RUN apk add --no-cache maven bash
 
+# Copy pom and download dependencies (cacheable)
 COPY pom.xml .
 RUN mvn dependency:go-offline -B
 
+# Copy source and scripts
 COPY src ./src
 COPY test-table.sh ./test-table.sh
 COPY test-coverage.sh ./test-coverage.sh
 
-RUN chmod +x ./test-coverage.sh
-RUN chmod +x ./test-table.sh
+# Make scripts executable
+RUN chmod +x ./test-table.sh ./test-coverage.sh
 
 # ================================
 # Development target
@@ -31,23 +34,18 @@ CMD ["mvn", "spring-boot:run", "-Dspring-boot.run.profiles=dev"]
 # ================================
 FROM base AS build
 
-# Install bash in Alpine
-RUN apk add --no-cache bash
-
 # Run tests and generate Jacoco report
-RUN mvn clean test jacoco:report
-
 # Run coverage scripts with bash
-RUN bash ./test-table.sh target/site/jacoco/jacoco.csv
-RUN bash ./test-coverage.sh target/site/jacoco/jacoco.csv
-
 # Build the jar
-RUN mvn clean package -DskipTests
+RUN mvn clean test jacoco:report \
+    && bash ./test-table.sh target/site/jacoco/jacoco.csv \
+    && bash ./test-coverage.sh target/site/jacoco/jacoco.csv \
+    && mvn clean package -DskipTests
 
 # ================================
 # Production runtime target
 # ================================
-FROM amazoncorretto:21-alpine3.21-jdk AS prod
+FROM amazoncorretto:21-alpine3.21 AS prod
 WORKDIR /app
 
 COPY --from=build /app/target/*.jar app.jar
